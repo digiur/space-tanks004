@@ -1,9 +1,15 @@
 {
     "compilerOptions": {
         "target": "esnext",
-        "module": "CommonJS" /* Specify module code generation: 'none', 'commonjs', 'amd', 'system', 'umd', 'es2015', or 'ESNext'. */,
+        "module": "commonjs" /* Specify module code generation: 'none', 'commonjs', 'amd', 'system', 'umd', 'es2015', or 'ESNext'. */,
         "strict": true,
         "esModuleInterop": true
     },
-    "include": ["./src/index.ts", "./types/*.d.ts"]
+    "include": [
+        "src/**/*"
+    ],
+    "exclude": [
+        "node_modules",
+        "**/*.spec.ts"
+    ]
 }
