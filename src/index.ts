@@ -1,7 +1,5 @@
 import * as PIXI from "pixi.js";
 
-import rabbitImage from "./assets/rabbit.png";
-
 export class Main {
     private static readonly GAME_WIDTH = 800;
     private static readonly GAME_HEIGHT = 600;
@@ -21,7 +19,6 @@ export class Main {
 
     private startLoadingAssets(): void {
         const loader = PIXI.Loader.shared;
-        loader.add("rabbit", rabbitImage);
         loader.add("spriteExample", "./spritesData.json"); // example of loading spriteSheet
 
         loader.on("complete", () => {
@@ -36,19 +33,11 @@ export class Main {
 
         const stage = this.app!.stage;
 
-        const bunny = this.getBunny();
-        bunny.position.set(Main.GAME_WIDTH / 2, Main.GAME_HEIGHT / 2);
-
         const birdFromSprite = this.getBird();
         birdFromSprite.anchor.set(0.5, 0.5);
-        birdFromSprite.position.set(Main.GAME_WIDTH / 2, Main.GAME_HEIGHT / 2 + bunny.height);
+        birdFromSprite.position.set(Main.GAME_WIDTH / 2, Main.GAME_HEIGHT / 2);
 
-        stage.addChild(bunny);
         stage.addChild(birdFromSprite);
-
-        this.app!.ticker.add(() => {
-            bunny.rotation += 0.05;
-        });
     }
 
     private createRenderer(): void {
@@ -75,19 +64,6 @@ export class Main {
         this.app.renderer.resize(window.innerWidth, window.innerHeight);
         this.app.stage.scale.x = window.innerWidth / Main.GAME_WIDTH;
         this.app.stage.scale.y = window.innerHeight / Main.GAME_HEIGHT;
-    }
-
-    private getBunny(): PIXI.Sprite {
-        const bunnyRotationPoint = {
-            x: 0.5,
-            y: 0.5,
-        };
-
-        const bunny = new PIXI.Sprite(PIXI.Texture.from("rabbit"));
-        bunny.anchor.set(bunnyRotationPoint.x, bunnyRotationPoint.y);
-        bunny.scale.set(2, 2);
-
-        return bunny;
     }
 
     private getBird(): PIXI.AnimatedSprite {
