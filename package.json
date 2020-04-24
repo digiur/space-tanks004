@@ -13,7 +13,8 @@
         "lint-check": "npx eslint ./src/**/*.ts",
         "code-style-check": "npm run lint-check && npm run pretty-check",
         "format": "npx prettier --write src/**",
-        "gitpush": "git commit -a -m \"NPM RUN GITPUSH\" & git status & git push"
+        "gitpush": "git commit -a -m \"NPM RUN GITPUSH\" & git status & git push",
+        "start": "npm run dev"
     },
     "author": "jkanchelov",
     "license": "MIT",
