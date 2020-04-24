@@ -8,36 +8,18 @@ export class Main {
 
     constructor() {
         window.onload = (): void => {
-            this.startLoadingAssets();
+            this.createRenderer();
+            const stage = this.app!.stage;
+
+            let circle = new PIXI.Graphics();
+            circle.beginFill(0x9966FF);
+            circle.drawCircle(0, 0, 32);
+            circle.endFill();
+            circle.x = 64;
+            circle.y = 130;
+
+            this.app!.stage.addChild(circle);
         };
-    }
-
-    // add for the test example purpose
-    public helloWorld(): string {
-        return "hello world";
-    }
-
-    private startLoadingAssets(): void {
-        const loader = PIXI.Loader.shared;
-        loader.add("spriteExample", "./spritesData.json"); // example of loading spriteSheet
-
-        loader.on("complete", () => {
-            this.onAssetsLoaded();
-        });
-        //
-        loader.load();
-    }
-
-    private onAssetsLoaded(): void {
-        this.createRenderer();
-
-        const stage = this.app!.stage;
-
-        const birdFromSprite = this.getBird();
-        birdFromSprite.anchor.set(0.5, 0.5);
-        birdFromSprite.position.set(Main.GAME_WIDTH / 2, Main.GAME_HEIGHT / 2);
-
-        stage.addChild(birdFromSprite);
     }
 
     private createRenderer(): void {
@@ -66,18 +48,9 @@ export class Main {
         this.app.stage.scale.y = window.innerHeight / Main.GAME_HEIGHT;
     }
 
-    private getBird(): PIXI.AnimatedSprite {
-        const bird = new PIXI.AnimatedSprite([
-            PIXI.Texture.from("birdUp.png"),
-            PIXI.Texture.from("birdMiddle.png"),
-            PIXI.Texture.from("birdDown.png"),
-        ]);
-        bird.loop = true;
-        bird.animationSpeed = 0.1;
-        bird.play();
-        bird.scale.set(3);
-
-        return bird;
+    // add for the test example purpose
+    public helloWorld(): string {
+        return "hello world";
     }
 }
 
