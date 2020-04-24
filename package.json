@@ -8,13 +8,13 @@
         "type-check": "tsc --noEmit",
         "clean-build": "npx del-cli ./dist",
         "dev": "node ./src/server.ts",
-        "build": "npm run type-check & npm run clean-build & parcel build ./src/index.html",
+        "build": "npm run type-check & npm run clean-build & parcel build ./src/index.html & parcel build ./src/server.ts --target node",
         "pretty-check": "npx prettier -c ./src/**/*.ts",
         "lint-check": "npx eslint ./src/**/*.ts",
         "code-style-check": "npm run lint-check && npm run pretty-check",
         "format": "npx prettier --write src/**",
         "gitpush": "git commit -a -m \"NPM RUN GITPUSH\" & git status & git push",
-        "start": "node ./src/server.ts"
+        "start": "node ./dist/server.js"
     },
     "author": "jkanchelov",
     "license": "MIT",
