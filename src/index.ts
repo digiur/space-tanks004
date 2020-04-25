@@ -1,10 +1,3 @@
-
-// app.ticker.add(delta => gameLoop(delta));
-
-// function gameLoop(delta){
-//     circle.x += 1*delta;
-// }
-
 import * as PIXI from 'pixi.js';
 import * as VEC from 'ts-vector';
 import * as MATH from 'mathjs';
@@ -13,7 +6,7 @@ import { Planet } from './planet';
 import { Shell } from './shell';
 import { Trail } from './trail';
 
-let planetMin = 40,
+const planetMin = 40,
 	planetMax = 200,
 	planetCount = 25,
 	planetBuffer = 80,
@@ -26,33 +19,25 @@ let planetMin = 40,
 	explodeLife = 500,
 	aimPos = new VEC.Vector(0, 0),
 	revealedTime = 100,
-	timeSinceRevealed = 0,
 	playerSize = 5,
 	playerLife = 2000,
+	planets = [] as Planet[],
+	shells = [] as Shell[],
+	trails = [] as Trail[],
+	soc = IO.connect(process.env.PORT ? 'https://space-tanks.herokuapp.com/' + process.env.PORT : 'http://localhost:3033');
+
+let app = new PIXI.Application({ backgroundColor: 0x000000, antialias: true, width: window.innerWidth, height: window.innerHeight }),
+	timeSinceRevealed = 0,
 	camX = 0,
 	camY = 0,
 	camZ = 1,
-	planets = [] as Planet[],
-	shells = [],
-	trails = [],
-	soc = IO.connect(process.env.PORT ? 'https://space-tanks.herokuapp.com/' + process.env.PORT : 'http://localhost:3033');
+	mousePos = new PIXI.Point();
 
 setup();
 
 function setup() {
-	//Create a Pixi Application
-	let app = new PIXI.Application({ backgroundColor: 0x000000, antialias: true, width: window.innerWidth, height: window.innerHeight });
-	//Add the canvas that Pixi automatically created for you to the HTML document
+	// PIXI
 	document.body.appendChild(app.view);
-
-	let circle = new PIXI.Graphics();
-	circle.beginFill(0x9966FF);
-	circle.drawCircle(0, 0, 32);
-	circle.endFill();
-	circle.x = 64;
-	circle.y = 130;
-	
-	app.stage.addChild(circle);
 
 	const config = {
 		epsilon: 1e-12,
@@ -60,17 +45,16 @@ function setup() {
 		number: 'number',
 		precision: 64,
 		predictable: false,
-		randomSeed: ""
+		randomSeed: "rosebud"
 	};
-
 	const math = MATH.create(MATH.all, config as MATH.ConfigOptions);
 
 	// Generate planets
-	let packingWidth = window.innerWidth / 2;
-	let packingHeight = window.innerHeight / 2;
+	let packingWidth = window.innerWidth;
+	let packingHeight = window.innerHeight;
 	do {
 		let p = new Planet(
-			new VEC.Vector(MATH.random(-packingWidth, packingWidth), MATH.random(-packingHeight, packingHeight)),
+			new VEC.Vector(MATH.random(0, packingWidth), MATH.random(0, packingHeight)),
 			MATH.random(planetMin, planetMax)
 		);
 
@@ -84,225 +68,145 @@ function setup() {
 			}
 		}
 
-		if (save)
+		if (save) {
+			console.log('Planet(' + p.pos[0] + ',' + p.pos[1] + ')');
 			planets.push(p);
+			app.stage.addChild(p.gfx);
+		}
 
 	} while (planets.length < planetCount)
 
-	// Connect to server
-	//socket = io.connect('http://localhost:3033');
-
-	soc.on('newShell', function (shellData:Shell) {
+	soc.on('newShell', function (shellData: Shell) {
 		shells.push(new Shell(shellData.pos, shellData.vel, shellData.size));
 	})
 
-	soc.on('playerPosUpdate', function (pos:VEC.Vector) {
+	soc.on('playerPosUpdate', function (pos: VEC.Vector) {
 		newTrail(pos, playerSize, playerLife);
 	})
+
+	document.addEventListener('keydown', function (event) {
+		if (event.keyCode == 65) {
+			console.log('A was pressed');
+		}
+		else if (event.keyCode == 68) {
+			console.log('D was pressed');
+		}
+		else if (event.keyCode == 69) {
+			console.log('E was pressed');
+		}
+		else if (event.keyCode == 81) {
+			console.log('Q was pressed');
+		}
+		else if (event.keyCode == 83) {
+			console.log('S was pressed');
+		}
+		else if (event.keyCode == 87) {
+			console.log('W was pressed');
+		}
+	});
+
+	document.addEventListener('keyup', function (event) {
+		if (event.keyCode == 65) {
+			console.log('A was released');
+		}
+		else if (event.keyCode == 68) {
+			console.log('D was released');
+		}
+		else if (event.keyCode == 69) {
+			console.log('E was released');
+		}
+		else if (event.keyCode == 81) {
+			console.log('Q was released');
+		}
+		else if (event.keyCode == 83) {
+			console.log('S was released');
+		}
+		else if (event.keyCode == 87) {
+			console.log('W was released');
+		}
+	});
+
+	app.ticker.add(delta => update(delta));
 }
 
 function newTrail(pos: VEC.Vector, size: number, life: number) {
-	trails.push(new Trail(pos, size, life));
+	let t = new Trail(pos, size, life);
+	trails.push(t);
+	app.stage.addChild(t.gfx);
+
 }
 
+function newShell(pos: VEC.Vector, vel: VEC.Vector, size: number) {
+	let s = new Shell(pos, vel, size);
+	shells.push(s);
+	app.stage.addChild(s.gfx);
+	var shellData = {
+		px: pos[0],
+		py: pos[1],
+		vx: vel[0],
+		vy: vel[1],
+		s: size
+	}
+	soc.emit('newShell', shellData);
+}
 
+function update(dt: number) {
+	mousePos = app.renderer.plugins.interaction.mouse.global;
+	// Update shells and trails and add new trails
+	for (let i = 0; i < shells.length; i++) {
+		newTrail(shells[i].pos, shellSize, trailLife);
+		shells[i].update(planets, dt);
+	}
+	for (let i = 0; i < trails.length; i++)
+		trails[i].update(dt);
+	// Remove dead things
+	let i = 0;
+	while (i < shells.length) {
+		if (shells[i].dead) {
+			newTrail(shells[i].pos, explodeSize, explodeLife);
+			shells.splice(i, 1);
+			continue;
+		}
+		i++
+	}
+	i = 0;
+	while (i < trails.length) {
+		if (trails[i].dead) {
+			trails.splice(i, 1);
+			continue;
+		}
+		i++
+	}
+	// Marco!
+	if ((timeSinceRevealed += dt) > revealedTime) {
+		timeSinceRevealed = 0.0;
+		var playerPosData = {
+			px: mousePos.x,
+			py: mousePos.y
+		}
+		soc.emit('playerPosUpdate', playerPosData);
+	}
+	// Polo!
+	if (timeSinceRevealed == 0.0)
+		newTrail(new VEC.Vector(mousePos.x, mousePos.y), playerSize, playerLife);
+}
 
-// function update() {
-
-//   // Update shells and trails and add new trails
-//   for (let i = 0; i < shells.length; i++) {
-//     newTrail(shells[i].pos.x, shells[i].pos.y, shellSize, trailLife);
-
-//     shells[i].update(planets);
-//   }
-//   for (let i = 0; i < trails.length; i++)
-//     trails[i].update();
-
-//   // Remove dead things
-//   let i = 0;
-//   while (i < shells.length) {
-//     if (shells[i].dead) {
-//       newTrail(shells[i].pos.x, shells[i].pos.y, explodeSize, explodeLife);
-//       shells.splice(i, 1);
-//       continue;
-//     }
-//     i++
-//   }
-//   i = 0;
-//   while (i < trails.length) {
-//     if (trails[i].dead) {
-//       trails.splice(i, 1);
-//       continue;
-//     }
-//     i++
-//   }
-
-//   // Marco!
-//   if ((timeSinceRevealed += deltaTime) > revealedTime) {
-//     timeSinceRevealed = 0.0;
-//     var x = camMX(mouseX);
-//     var y = camMY(mouseY);
-//     var playerPosData = {
-//       px: x,
-//       py: y
-//     }
-//     socket.emit('playerPosUpdate', playerPosData);
-//   }
-
-//   if (keyIsDown(87))//w
-//     camY -= 30;
-//   if (keyIsDown(65))//a
-//     camX -= 30;
-//   if (keyIsDown(83))//s
-//     camY += 30;
-//   if (keyIsDown(68))//d
-//     camX += 30;
-//   if (keyIsDown(DOWN_ARROW)) {//down
-//     camZ /= 1.01;
-//   }
-//   if (keyIsDown(UP_ARROW)) {//up
-//     camZ *= 1.01;
-//   }
+// function camTX(x: number) {
+// 	return (x - camX + window.innerWidth / 2) / camZ;
 // }
 
-// function draw() {
-
-//   // Why no game loop?
-//   update();
-
-//   // Polo!
-//   if (timeSinceRevealed == 0.0)
-//     newTrail(camMX(mouseX), camMY(mouseY), playerSize, playerLife);
-
-//   // The background and planets and shells and trails and 'UI' oh my!
-//   background(0);
-//   for (i = 0; i < planets.length; i++)
-//     planets[i].draw();
-//   for (i = 0; i < shells.length; i++)
-//     shells[i].draw();
-//   for (i = 0; i < trails.length; i++)
-//     trails[i].draw();
+// function camTY(y: number) {
+// 	return (y - camY + window.innerHeight / 2) / camZ;
 // }
 
-// function touchStarted() {
-//   return inputStart()
+// function camMX(x: number) {
+// 	return camX + x * camZ - window.innerWidth / 2;
 // }
 
-// function mousePressed() {
-//   return inputStart()
+// function camMY(y: number) {
+// 	return camY + y * camZ - window.innerHeight / 2;
 // }
 
-// function touchMoved() {
-//   return inputMove()
+// function camSZ(s: number) {
+// 	return s / camZ;
 // }
-
-// function mouseDragged() {
-//   return inputMove()
-// }
-
-// function inputStart() {
-//   aimPos.set(camMX(mouseX), camMY(mouseY));
-//   return false;
-// }
-
-// function inputMove() {
-//   let pos = createVector(camMX(mouseX), camMY(mouseY));
-//   let vel = p5.Vector.mult(p5.Vector.sub(aimPos, pos), shellVelRatio);
-//   newShell(aimPos.x, aimPos.y, vel.x, vel.y, shellSize);
-//   return false;
-// }
-
-// function newTrail(posX, posY, mySize, myLife) {
-//   trails.push(new Trail(posX, posY, mySize, myLife));
-// }
-
-// function newShell(posX, posY, velX, velY, size) {
-//   shells.push(new Shell(posX, posY, velX, velY, size));
-//   var shellData = {
-//     px: posX,
-//     py: posY,
-//     vx: velX,
-//     vy: velY,
-//     s: size
-//   }
-//   socket.emit('newShell', shellData);
-// }
-
-// function camTX(x) {
-//   return (x - camX + windowWidth / 2) / camZ;
-// }
-
-// function camTY(y) {
-//   return (y - camY + windowHeight / 2) / camZ;
-// }
-
-// function camMX(x) {
-//   return camX + x * camZ - windowWidth / 2;
-// }
-
-// function camMY(y) {
-//   return camY + y * camZ - windowHeight / 2;
-// }
-
-// function camSZ(s) {
-//   return s / camZ;
-// }
-
-// function reset() { }
-
-
-// export class Main {
-//     private static readonly GAME_WIDTH = 800;
-//     private static readonly GAME_HEIGHT = 600;
-
-//     private app: PIXI.Application | undefined;
-
-//     constructor() {
-//         window.onload = (): void => {
-//             this.createRenderer();
-//             const stage = this.app!.stage;
-
-//             let circle = new PIXI.Graphics();
-//             circle.beginFill(0x9966FF);
-//             circle.drawCircle(0, 0, 32);
-//             circle.endFill();
-//             circle.x = 64;
-//             circle.y = 130;
-
-//             this.app!.stage.addChild(circle);
-//         };
-//     }
-
-//     private createRenderer(): void {
-//         this.app = new PIXI.Application({
-//             backgroundColor: 0xd3d3d3,
-//             width: Main.GAME_WIDTH,
-//             height: Main.GAME_HEIGHT,
-//         });
-
-//         document.body.appendChild(this.app.view);
-
-//         this.app.renderer.resize(window.innerWidth, window.innerHeight);
-//         this.app.stage.scale.x = window.innerWidth / Main.GAME_WIDTH;
-//         this.app.stage.scale.y = window.innerHeight / Main.GAME_HEIGHT;
-
-//         window.addEventListener("resize", this.onResize.bind(this));
-//     }
-
-//     private onResize(): void {
-//         if (!this.app) {
-//             return;
-//         }
-
-//         
-//         this.app.stage.scale.x = window.innerWidth / Main.GAME_WIDTH;
-//         this.app.stage.scale.y = window.innerHeight / Main.GAME_HEIGHT;
-//     }
-
-//     // add for the test example purpose
-//     public helloWorld(): string {
-//         return "hello world";
-//     }
-// }
-
-// new Main();

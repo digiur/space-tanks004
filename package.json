@@ -4,9 +4,9 @@
     "description": "pixi.js typescript boilerplate",
     "scripts": {
         "build": "npm run clean-b & npm run type-check & npm run build-c & npm run build-s",
-        "build-st": "npm run build & npm run start",
         "build-c": "parcel build ./src/index.html",
         "build-d": "npm run clean-c & npm install & npm run build",
+        "build-q": "npm run clean-b &  npm run build-c & npm run build-s & npm run start",
         "build-s": "parcel build ./src/server.ts --target node",
         "clean-b": "npx del-cli ./dist",
         "clean-c": "npx del-cli ./.cache",

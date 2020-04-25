@@ -1,3 +1,4 @@
+import * as PIXI from 'pixi.js';
 import * as VEC from 'ts-vector';
 
 export class Trail {
@@ -7,6 +8,7 @@ export class Trail {
 	life: number;
 	age: number;
 	dead: boolean;
+	gfx: PIXI.Graphics;
 
 	constructor(pos: VEC.Vector, size: number, life: number) {
 		this.pos = pos;
@@ -14,16 +16,17 @@ export class Trail {
 		this.life = life;
 		this.age = 0;
 		this.dead = false;
+		this.gfx = new PIXI.Graphics();
+		this.gfx.beginFill(0x9966ff);
+		this.gfx.drawCircle(0, 0, size);
+		this.gfx.endFill();
 	}
 
-	update() {
+	update(dt:number) {
 		// The life of a trail
-		this.age++;
+		this.age++;/*deltatime*/
 		if (this.age > this.life) {
 			this.dead = true;
 		}
-	}
-
-	draw() {
 	}
 }
