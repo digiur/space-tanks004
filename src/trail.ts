@@ -11,20 +11,21 @@ export class Trail {
 	gfx: PIXI.Graphics;
 
 	constructor(pos: VEC.Vector, size: number, life: number) {
-		this.pos = pos;
+		this.pos = new VEC.Vector(pos[0], pos[1]);
 		this.size = size;
 		this.life = life;
 		this.age = 0;
 		this.dead = false;
 		this.gfx = new PIXI.Graphics();
-		this.gfx.beginFill(0x9966ff);
+		this.gfx.lineStyle(1, 0x00ff00);
 		this.gfx.drawCircle(0, 0, size);
-		this.gfx.endFill();
+		this.gfx.position.x = pos[0];
+		this.gfx.position.y = pos[1];
 	}
 
-	update(dt:number) {
+	update(dt: number) {
 		// The life of a trail
-		this.age++;/*deltatime*/
+		this.age += dt;
 		if (this.age > this.life) {
 			this.dead = true;
 		}

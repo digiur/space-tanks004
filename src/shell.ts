@@ -14,9 +14,9 @@ export class Shell {
 	dead: boolean;
 	gfx: PIXI.Graphics;
 
-	constructor(pos: VEC.Vector, vel: VEC.Vector, size: number) {
-		this.pos = pos;
-		this.vel = vel;
+	constructor(pos: VEC.Vector, size: number, vel: VEC.Vector) {
+		this.pos = new VEC.Vector(pos[0],pos[1]);
+		this.vel = new VEC.Vector(vel[0],vel[1]);
 		this.acc = new VEC.Vector(0, 0);
 		this.force = new VEC.Vector(0, 0);
 		this.size = size;
@@ -25,31 +25,36 @@ export class Shell {
 		this.gfx.beginFill(0x9966ff);
 		this.gfx.drawCircle(0, 0, size);
 		this.gfx.endFill();
+		this.gfx.position.x = pos[0];
+		this.gfx.position.y = pos[1];
 	}
 
 	update(planets: Planet[], dt: number) {
 		this.doPhysics(planets, dt);
 		this.doCollisions(planets);
+		this.gfx.position.x = this.pos[0];
+		this.gfx.position.y = this.pos[1];
 	}
 
 	doPhysics(planets: Planet[], dt: number) {
-
 		// Aggregate forces from planets
-		this.force.equals([0, 0]);
-		for (let i = 0; i < planets.length; i++)
-			this.force.add(this.getForce(planets[i]));
+		this.force[0] = 0;
+		this.force[1] = 0;
+		for (let i = 0; i < planets.length; i++){
+			let v = this.getForce(planets[i]);
+			this.force.addSelf(v);
+		}
 
 		// "Do physics"
-		this.acc.equals(this.force.divide(this.size));
-		this.vel.add(this.acc);
-		this.pos.add(this.vel); /*deltatime*/
+		this.acc = this.force.divide(this.size).multiply(dt);
+		this.vel.addSelf(this.acc.multiply(dt));
+		this.pos.addSelf(this.vel.multiply(dt));
 	}
 
 	getForce(planet: Planet) {
 		// Force due to gravity = (G * m1 * m2) / (r * r)
 		// in the direction of the source of gravity
-		let dir = VEC.Vector.subtract(planet.pos, this.pos).normalizeVector();
-		return dir.multiply((G * this.size * planet.size) / VEC.Vector.subtract(this.pos, planet.pos).sumOfSquares());
+		return planet.pos.subtract(this.pos).normalizeVector().multiply(G * this.size * planet.size / this.pos.subtract(planet.pos).sumOfSquares());
 	}
 
 	doCollisions(planets: Planet[]) {
@@ -62,6 +67,6 @@ export class Shell {
 		// Using the square of the magnitude avoids a square root calculation
 		let r1 = planet.size / 2;
 		let r2 = this.size / 2;
-		return VEC.Vector.subtract(this.pos, planet.pos).sumOfSquares() < (r1 + r2) * (r1 + r2);
+		return this.pos.subtract(planet.pos).sumOfSquares() < (r1 + r2) * (r1 + r2);
 	}
 }

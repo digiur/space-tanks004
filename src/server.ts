@@ -7,7 +7,6 @@ import PATH from 'path';
 var app = EXP();
 app.use(EXP.static('dist'));
 app.get('/', function (req, res) {
-	console.log('GET / request returning: ' + __dirname + '/src/index.html');
 	res.sendFile(PATH.join(__dirname + '/src/index.html'));
 });
 
@@ -23,7 +22,6 @@ io.on('connection', function (socket) {
 
 	socket.on('newShell', function (shellData) {
 		socket.broadcast.emit('newShell', shellData);
-		console.log("Shell broadcast");
 	});
 
 	socket.on('playerPosUpdate', function (playerPosData) {
