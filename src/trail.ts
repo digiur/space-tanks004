@@ -25,7 +25,7 @@ export class Trail {
 
 	update(dt: number) {
 		// The life of a trail
-		this.age += dt;
+		//this.age += dt;
 		if (this.age > this.life) {
 			this.dead = true;
 		}
