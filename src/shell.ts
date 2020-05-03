@@ -1,72 +1,142 @@
 import * as PIXI from 'pixi.js';
-import * as VEC from 'ts-vector';
+import Victor from 'victor';
 import { Planet } from './planet';
+import * as PARTICLE from 'pixi-particles';
 
-let G = 20;
+
+const G = 400, RSQ_SCALER = 1;
 
 export class Shell {
 
-	pos: VEC.Vector;
-	vel: VEC.Vector;
-	acc: VEC.Vector;
-	force: VEC.Vector;
+	pos: Victor;
+	vel: Victor;
+	acc: Victor;
 	size: number;
 	dead: boolean;
-	gfx: PIXI.Graphics;
+	sprite: PIXI.Sprite;
+	emitter: PARTICLE.Emitter;
 
-	constructor(pos: VEC.Vector, size: number, vel: VEC.Vector) {
-		this.pos = new VEC.Vector(pos[0],pos[1]);
-		this.vel = new VEC.Vector(vel[0],vel[1]);
-		this.acc = new VEC.Vector(0, 0);
-		this.force = new VEC.Vector(0, 0);
+	constructor(x: number, y: number, size: number, vx: number, vy: number, sprite: PIXI.Sprite, particleContainer: PIXI.Container) {
+		this.pos = new Victor(x, y);
+		this.vel = new Victor(vx, vy);
+		this.acc = new Victor(0, 0);
 		this.size = size;
 		this.dead = false;
-		this.gfx = new PIXI.Graphics();
-		this.gfx.beginFill(0x9966ff);
-		this.gfx.drawCircle(0, 0, size);
-		this.gfx.endFill();
-		this.gfx.position.x = pos[0];
-		this.gfx.position.y = pos[1];
+		this.sprite = sprite;
+		this.sprite.position.x = x;
+		this.sprite.position.y = y;
+		this.sprite.angle = this.vel.angleDeg();
+		this.sprite.scale.set(1, 1);
+		this.sprite.pivot.set(this.sprite.width, this.sprite.height / 2);
+		this.emitter = new PARTICLE.Emitter(particleContainer, PIXI.Loader.shared.resources['whiteSquare25'].texture, {
+			"alpha": { // How do I keep this in a seperate file?
+				"start": 1,
+				"end": 0
+			},
+			"scale": {
+				"start": 1,
+				"end": 0.33,
+				"minimumScaleMultiplier": 1
+			},
+			"color": {
+				"start": "#ff0000",
+				"end": "#ffff00"
+			},
+			"speed": {
+				"start": 0,
+				"end": 0,
+				"minimumSpeedMultiplier": 1
+			},
+			"maxSpeed": 0,
+			"startRotation": {
+				"min": 0,
+				"max": 0
+			},
+			"noRotation": false,
+			"rotationSpeed": {
+				"min": 1200,
+				"max": -1200
+			},
+			"lifetime": {
+				"min": 0.25,
+				"max": 0.5
+			},
+			"blendMode": "normal",
+			"frequency": 0.01,
+			"emitterLifetime": -1,
+			"maxParticles": 50,
+			"pos": {
+				"x": 0,
+				"y": 0
+			},
+			"addAtBack": false,
+			"spawnType": "circle",
+			"emit": false,
+			"spawnCircle": {
+				"x": 0,
+				"y": 0,
+				"r": this.sprite.height / 2
+			}
+		});
 	}
 
-	update(planets: Planet[], dt: number) {
+	stUpdate(planets: Planet[], dt: number) {
+		// Before update
 		this.doPhysics(planets, dt);
 		this.doCollisions(planets);
-		this.gfx.position.x = this.pos[0];
-		this.gfx.position.y = this.pos[1];
+		this.updateComponents();
+
+		// After update
+		this.emitter.emit = true;
+		this.emitter.update(dt);
+	}
+
+	// Housekeeping to keep components in sync
+	updateComponents() {
+		this.sprite.position.x = this.pos.x;
+		this.sprite.position.y = this.pos.y;
+		this.sprite.angle = this.vel.angleDeg();
+
+		let p = new PIXI.Point(0, this.sprite.height / 2);
+		this.sprite.localTransform.apply(p, p);
+		this.emitter.updateOwnerPos(p.x, p.y);
+		this.emitter.rotate(this.sprite.angle);
 	}
 
 	doPhysics(planets: Planet[], dt: number) {
 		// Aggregate forces from planets
-		this.force[0] = 0;
-		this.force[1] = 0;
-		for (let i = 0; i < planets.length; i++){
-			let v = this.getForce(planets[i]);
-			this.force.addSelf(v);
+		let force = new Victor(0, 0);
+		for (let i = 0; i < planets.length; i++) {
+			force.add(this.getForce(planets[i]));
 		}
-
 		// "Do physics"
-		this.acc = this.force.divide(this.size).multiply(dt);
-		this.vel.addSelf(this.acc.multiply(dt));
-		this.pos.addSelf(this.vel.multiply(dt));
+		//force.divideScalar(this.size);
+		this.acc.copy(force);
+		this.vel.add(this.acc.clone().multiplyScalar(dt));
+		this.pos.add(this.vel.clone().multiplyScalar(dt));
 	}
 
 	getForce(planet: Planet) {
 		// Force due to gravity = (G * m1 * m2) / (r * r)
 		// in the direction of the source of gravity
-		return planet.pos.subtract(this.pos).normalizeVector().multiply(G * this.size * planet.size / this.pos.subtract(planet.pos).sumOfSquares());
+		let rSq = planet.pos.distanceSq(this.pos) * RSQ_SCALER;
+
+		let f = planet.pos.clone();
+		f.subtract(this.pos);
+		f.normalize();
+		f.multiplyScalar(G * planet.size * planet.size * this.size / rSq);
+		return f;
 	}
 
 	doCollisions(planets: Planet[]) {
 		for (let i = 0; i < planets.length; i++)
-			if (this.collideSq(planets[i]))
+			if (this.collide(planets[i]))
 				this.dead = true;
 	}
 
-	collideSq(planet: Planet) {
+	collide(planet: Planet) {
 		// Using the square of the magnitude avoids a square root calculation
-		let r1 = planet.size / 2;
-		let r2 = this.size / 2;
-		return this.pos.subtract(planet.pos).sumOfSquares() < (r1 + r2) * (r1 + r2);
+		let r = planet.size / 2 + this.size / 2;
+		return this.pos.distanceSq(planet.pos) < r * r;
 	}
 }

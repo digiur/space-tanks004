@@ -1,19 +1,19 @@
 import * as PIXI from 'pixi.js';
-import * as VEC from 'ts-vector';
+import Victor from 'victor';
 
 export class Planet {
 
-	pos: VEC.Vector;
+	pos: Victor;
 	size: number;
 	gfx: PIXI.Graphics;
 
-	constructor(pos: VEC.Vector, size: number) {
-		this.pos = new VEC.Vector(pos[0],pos[1]);
+	constructor(x: number, y: number, size: number) {
+		this.pos = new Victor(x, y);
 		this.size = size;
 		this.gfx = new PIXI.Graphics();
-		this.gfx.beginFill(0x9966ff);
-		this.gfx.drawCircle(0, 0, size/2);
-		this.gfx.position.x = pos[0];
-		this.gfx.position.y = pos[1];
+		this.gfx.beginFill(0x660099);
+		this.gfx.drawCircle(0, 0, size / 2);
+		this.gfx.position.x = this.pos.x;
+		this.gfx.position.y = this.pos.y;
 	}
 }

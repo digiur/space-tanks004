@@ -7,7 +7,7 @@ import PATH from 'path';
 var app = EXP();
 app.use(EXP.static('dist'));
 app.get('/', function (req, res) {
-	res.sendFile(PATH.join(__dirname + '/src/index.html'));
+	res.sendFile(PATH.join(__dirname + '/index.html'));
 });
 
 // listen for requests :)
