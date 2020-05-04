@@ -22,7 +22,7 @@ export class SpaceTanks {
 	shellSize = 5;
 	planetMin = 500;
 	planetMax = 3000;
-	planetCount = 20;
+	planetCount = 15;
 	planetBuffer = 2000;
 	shellVelRatio = 1;
 
