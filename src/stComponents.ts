@@ -1,7 +1,7 @@
 import * as PIXI from "pixi.js";
 import { STObject } from "./stObjects";
 
-export abstract class STComponent {
+export abstract class STComponents {
 	constructor(readonly _name: string) {}
 	abstract stUpdate(dt: number, gameObject: STObject): void;
 	abstract stDraw(dt: number, gameObject: STObject): void;

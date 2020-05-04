@@ -2,7 +2,7 @@ import Victor from "victor";
 import { STComponent } from "./stComponents";
 import { Planet } from "./planet";
 
-export abstract class STObject {
+export abstract class STObjects {
 	constructor(
 		readonly _pos: Victor,
 		readonly _scale: Victor,
