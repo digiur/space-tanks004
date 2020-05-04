@@ -1,6 +1,6 @@
 import * as PIXI from "pixi.js";
-import * as CMP from "./stComponent";
-import * as OBJ from "./stObject";
+import * as CMP from "./stComponents";
+import * as OBJ from "./stObjects";
 import { SpaceTanks } from "./spaceTanks";
 
 export class STFactory {

@@ -1,5 +1,5 @@
 import * as PIXI from "pixi.js";
-import * as OBJ from "./stObject";
+import * as OBJ from "./stObjects";
 import * as MATH from "mathjs";
 import Victor from "victor";
 import { STFactory } from "./stFactory";
