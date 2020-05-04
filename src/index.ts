@@ -1,6 +1,6 @@
 //import IO from "socket.io-client";
 import * as PIXI from "pixi.js";
-import { SpaceTanks } from "./SpaceTanks";
+import { SpaceTanks } from "./spaceTanks";
 
 // New PIXI Instance
 const pixi = new PIXI.Application({
