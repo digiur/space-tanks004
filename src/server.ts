@@ -15,7 +15,7 @@ const server = app.listen(process.env.PORT || 3033);
 const io = SOC.listen(server);
 
 // Is this an object? WTF javascript?
-// Is this an anonimous method?
+// Is this an anonymous method?
 io.on("connection", function (socket) {
 	console.log("new connection: " + socket.id);
 
