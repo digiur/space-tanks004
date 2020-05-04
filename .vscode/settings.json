@@ -5,5 +5,8 @@
         "typescript",
         "typescriptreact"
     ],
-    "editor.insertSpaces": false
+    "editor.insertSpaces": false,
+    "cSpell.words": [
+        "PIXI"
+    ]
 }

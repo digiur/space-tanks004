@@ -1,0 +1,49 @@
+{
+	"frames": {
+		"tankPig0.png": {
+			"frame": { "x": 0, "y": 0, "w": 192, "h": 186 },
+			"rotated": false,
+			"trimmed": false,
+			"spriteSourceSize": { "x": 0, "y": 0, "w": 192, "h": 186 },
+			"sourceSize": { "w": 192, "h": 186 }
+		},
+		"tankPig1.png": {
+			"frame": { "x": 192, "y": 0, "w": 192, "h": 186 },
+			"rotated": false,
+			"trimmed": false,
+			"spriteSourceSize": { "x": 0, "y": 0, "w": 192, "h": 186 },
+			"sourceSize": { "w": 192, "h": 186 }
+		},
+		"tankPig2.png": {
+			"frame": { "x": 384, "y": 0, "w": 192, "h": 186 },
+			"rotated": false,
+			"trimmed": false,
+			"spriteSourceSize": { "x": 0, "y": 0, "w": 192, "h": 186 },
+			"sourceSize": { "w": 192, "h": 186 }
+		},
+		"tankPig3.png": {
+			"frame": { "x": 576, "y": 0, "w": 192, "h": 186 },
+			"rotated": false,
+			"trimmed": false,
+			"spriteSourceSize": { "x": 0, "y": 0, "w": 192, "h": 186 },
+			"sourceSize": { "w": 192, "h": 186 }
+		}
+	},
+	"animations": {
+		"tankPig": [
+			"tankPig0.png",
+			"tankPig1.png",
+			"tankPig2.png",
+			"tankPig3.png"
+		]
+	},
+	"meta": {
+		"app": "https://www.codeandweb.com/texturepacker",
+		"version": "1.0",
+		"image": "tankPig.png",
+		"format": "RGBA8888",
+		"size": { "w": 768, "h": 186 },
+		"scale": "1",
+		"smartupdate": "$TexturePacker:SmartUpdate:7ea56ac0045ed612d0a4ccf6ca0b83f1:079ddf3a1fe3f6fa1e0ca6a02884915a:9e623e842bd4b26cdce0a9cacf9600fa$"
+	}
+}

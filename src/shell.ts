@@ -1,111 +1,122 @@
-import * as PIXI from 'pixi.js';
-import Victor from 'victor';
-import { Planet } from './planet';
-import * as PARTICLE from 'pixi-particles';
+import * as MATH from "mathjs";
+import * as PIXI from "pixi.js";
+import * as PARTICLE from "pixi-particles";
+import * as SMOKE from "./emitters/shellSmoke.json";
+import * as EXHAUST from "./emitters/shellExhaust.json";
+import * as STARS from "./emitters/shellStars.json";
+import * as EXPLOSION from "./emitters/shellExplosion.json";
+import Victor from "victor";
+import { Planet } from "./planet";
+import { WorldCamera } from "./worldCamera";
 
-
-const G = 400, RSQ_SCALER = 1;
+const G = 400,
+	RSQ_SCALER = 1;
 
 export class Shell {
-
 	pos: Victor;
 	vel: Victor;
 	acc: Victor;
 	size: number;
 	dead: boolean;
+	readyForDelete: boolean;
 	sprite: PIXI.Sprite;
-	emitter: PARTICLE.Emitter;
+	exhaust: PARTICLE.Emitter;
+	stars: PARTICLE.Emitter;
+	smoke: PARTICLE.Emitter;
+	explosion: PARTICLE.Emitter;
+	life: number;
 
-	constructor(x: number, y: number, size: number, vx: number, vy: number, sprite: PIXI.Sprite, particleContainer: PIXI.Container) {
+	constructor(
+		x: number,
+		y: number,
+		size: number,
+		vx: number,
+		vy: number,
+		sprite: PIXI.Sprite,
+		world: WorldCamera,
+		life: number
+	) {
+		this.life = life;
 		this.pos = new Victor(x, y);
 		this.vel = new Victor(vx, vy);
 		this.acc = new Victor(0, 0);
 		this.size = size;
 		this.dead = false;
+		this.readyForDelete = false;
 		this.sprite = sprite;
 		this.sprite.position.x = x;
 		this.sprite.position.y = y;
 		this.sprite.angle = this.vel.angleDeg();
 		this.sprite.scale.set(1, 1);
 		this.sprite.pivot.set(this.sprite.width, this.sprite.height / 2);
-		this.emitter = new PARTICLE.Emitter(particleContainer, PIXI.Loader.shared.resources['whiteSquare25'].texture, {
-			"alpha": { // How do I keep this in a seperate file?
-				"start": 1,
-				"end": 0
-			},
-			"scale": {
-				"start": 1,
-				"end": 0.33,
-				"minimumScaleMultiplier": 1
-			},
-			"color": {
-				"start": "#ff0000",
-				"end": "#ffff00"
-			},
-			"speed": {
-				"start": 0,
-				"end": 0,
-				"minimumSpeedMultiplier": 1
-			},
-			"maxSpeed": 0,
-			"startRotation": {
-				"min": 0,
-				"max": 0
-			},
-			"noRotation": false,
-			"rotationSpeed": {
-				"min": 1200,
-				"max": -1200
-			},
-			"lifetime": {
-				"min": 0.25,
-				"max": 0.5
-			},
-			"blendMode": "normal",
-			"frequency": 0.01,
-			"emitterLifetime": -1,
-			"maxParticles": 50,
-			"pos": {
-				"x": 0,
-				"y": 0
-			},
-			"addAtBack": false,
-			"spawnType": "circle",
-			"emit": false,
-			"spawnCircle": {
-				"x": 0,
-				"y": 0,
-				"r": this.sprite.height / 2
-			}
-		});
+		this.stars = new PARTICLE.Emitter(
+			world.getLayer("particle-0"),
+			PIXI.Loader.shared.resources["star"].texture,
+			STARS
+		);
+		this.explosion = new PARTICLE.Emitter(
+			world.getLayer("particle-1"),
+			PIXI.Loader.shared.resources["fire"].texture,
+			EXPLOSION
+		);
+		this.exhaust = new PARTICLE.Emitter(
+			world.getLayer("particle-2"),
+			PIXI.Loader.shared.resources["whiteSquare50"].texture,
+			EXHAUST
+		);
+		this.smoke = new PARTICLE.Emitter(
+			world.getLayer("particle-2"),
+			PIXI.Loader.shared.resources["smoke"].texture,
+			SMOKE
+		);
 	}
 
-	stUpdate(planets: Planet[], dt: number) {
-		// Before update
+	stUpdate(planets: Planet[], dt: number): void {
+		if (this.dead) return;
 		this.doPhysics(planets, dt);
 		this.doCollisions(planets);
 		this.updateComponents();
+		if (!this.exhaust.emit && !this.dead) this.exhaust.emit = true;
 
-		// After update
-		this.emitter.emit = true;
-		this.emitter.update(dt);
+		if ((this.life -= dt) <= 0) this.die();
+	}
+
+	die(): void {
+		const p = new PIXI.Point(0, this.sprite.height / 2);
+		this.sprite.localTransform.apply(p, p);
+		this.sprite.visible = false;
+		this.exhaust.emit = false;
+
+		this.explosion.updateOwnerPos(p.x, p.y);
+		this.smoke.updateOwnerPos(p.x, p.y);
+		this.stars.updateOwnerPos(p.x, p.y);
+
+		this.smoke.playOnceAndDestroy(() => {
+			//"smoke over"
+		});
+		this.explosion.playOnceAndDestroy(() => {
+			//"explode over"
+		});
+		this.stars.playOnceAndDestroy(() => {
+			//"stars over"
+		});
+		this.dead = true;
 	}
 
 	// Housekeeping to keep components in sync
-	updateComponents() {
+	updateComponents(): void {
 		this.sprite.position.x = this.pos.x;
 		this.sprite.position.y = this.pos.y;
 		this.sprite.angle = this.vel.angleDeg();
-
-		let p = new PIXI.Point(0, this.sprite.height / 2);
+		const p = new PIXI.Point(0, this.sprite.height / 2);
 		this.sprite.localTransform.apply(p, p);
-		this.emitter.updateOwnerPos(p.x, p.y);
-		this.emitter.rotate(this.sprite.angle);
+		this.exhaust.updateOwnerPos(p.x, p.y);
+		this.exhaust.rotate(this.sprite.angle);
 	}
 
-	doPhysics(planets: Planet[], dt: number) {
+	doPhysics(planets: Planet[], dt: number): void {
 		// Aggregate forces from planets
-		let force = new Victor(0, 0);
+		const force = new Victor(0, 0);
 		for (let i = 0; i < planets.length; i++) {
 			force.add(this.getForce(planets[i]));
 		}
@@ -116,27 +127,27 @@ export class Shell {
 		this.pos.add(this.vel.clone().multiplyScalar(dt));
 	}
 
-	getForce(planet: Planet) {
+	getForce(planet: Planet): Victor {
 		// Force due to gravity = (G * m1 * m2) / (r * r)
 		// in the direction of the source of gravity
-		let rSq = planet.pos.distanceSq(this.pos) * RSQ_SCALER;
-
-		let f = planet.pos.clone();
-		f.subtract(this.pos);
-		f.normalize();
-		f.multiplyScalar(G * planet.size * planet.size * this.size / rSq);
-		return f;
+		const rSq = planet.pos.distanceSq(this.pos) * RSQ_SCALER;
+		return planet.pos
+			.clone()
+			.subtract(this.pos)
+			.normalize()
+			.multiplyScalar(
+				(G * MATH.pi * planet.size * planet.size * this.size) / rSq
+			);
 	}
 
-	doCollisions(planets: Planet[]) {
+	doCollisions(planets: Planet[]): void {
 		for (let i = 0; i < planets.length; i++)
-			if (this.collide(planets[i]))
-				this.dead = true;
+			if (this.collide(planets[i])) this.die();
 	}
 
-	collide(planet: Planet) {
+	collide(planet: Planet): boolean {
 		// Using the square of the magnitude avoids a square root calculation
-		let r = planet.size / 2 + this.size / 2;
+		const r = planet.size + this.size;
 		return this.pos.distanceSq(planet.pos) < r * r;
 	}
 }

@@ -1,8 +1,7 @@
-import * as PIXI from 'pixi.js';
-import Victor from 'victor';
+import * as PIXI from "pixi.js";
+import Victor from "victor";
 
 export class Player {
-
 	pos: Victor;
 	size: number;
 	cursor: PIXI.Graphics;
@@ -22,12 +21,12 @@ export class Player {
 		this.aiming = false;
 	}
 
-	stUpdate(dt: number, mousePos: Victor) {
+	stUpdate(dt: number, mousePos: Victor): void {
 		this.pos.copy(mousePos);
 		if (this.aiming) {
 			this.aim.clear();
 			this.aim.lineStyle(1, 0x00ff00);
-			this.aim.moveTo(mousePos.x, mousePos.y)
+			this.aim.moveTo(mousePos.x, mousePos.y);
 			this.aim.lineTo(this.cursor.position.x, this.cursor.position.y);
 		} else {
 			this.aim.clear();
@@ -36,4 +35,11 @@ export class Player {
 		}
 	}
 
+	setAiming(): void {
+		this.aiming = true;
+	}
+
+	setNotAiming(): void {
+		this.aiming = false;
+	}
 }

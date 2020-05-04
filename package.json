@@ -4,22 +4,19 @@
     "description": "Space, tanks.",
     "tags": "tanks, space",
     "scripts": {
-        "build": "npm run clean-b & npm run type-check & npm run build-c & npm run build-s",
+        "build": "npm run clear-build & npm run code-style & npm run build-c & npm run build-s",
         "build-c": "parcel build ./src/index.html --log-level 3",
-        "build-d": "npm run clean-c & npm install & npm run build",
-        "build-q": "npm run clean-b &  npm run build-c & npm run build-s & npm run start",
+        "build-d": "npm run clear-node & npm run clear-cache & npm run clear-build & npm install & npm run build-c & npm run build-s",
+        "build-q": "npm run build-c & npm run build-s & npm run start",
         "build-s": "parcel build ./src/server.ts --log-level 3 --target node",
-        "clean-b": "npx del-cli ./dist",
-        "clean-c": "npx del-cli ./.cache",
+        "clear-build": "npx del-cli ./dist",
+        "clear-cache": "npx del-cli ./.cache",
+        "clear-node": "npx del-cli ./node_modules",
         "code-coverage": "jest --coverage",
-        "code-style": "npm run lint-check && npm run pretty-check",
-        "dev": "node ./src/server.ts",
+        "code-style": "npx eslint ./src/**/*.ts & npx prettier -c ./src/**/*.ts & tsc --noEmit",
         "format": "npx prettier --write src/**",
-        "gitpush": "git commit -a -m \"NPM RUN GITPUSH\" & git status & git push",
-        "lint-check": "npx eslint ./src/**/*.ts",
+        "git-quick-push": "git commit -a -m \"git-quick-push\" & git status & git push",
         "test": "npx jest",
-        "type-check": "tsc --noEmit",
-        "pretty-check": "npx prettier -c ./src/**/*.ts",
         "start": "node ./dist/server.js"
     },
     "author": "jkanchelov",
@@ -56,6 +53,11 @@
         "prettier": "^2.0.5",
         "ts-jest": "^25.4.0",
         "typescript": "^3.8.3"
+    },
+    "prettier": {
+        "useTabs": true,
+        "tabWidth": 4,
+        "quoteProps": "consistent"
     },
     "jest": {
         "transform": {
