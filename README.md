@@ -14,4 +14,4 @@ Space tanks...
 
 ## Commands:
 
-See package.json for more commands
+See `package.json` for more commands

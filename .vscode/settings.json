@@ -7,6 +7,7 @@
     ],
     "editor.insertSpaces": false,
     "cSpell.words": [
-        "PIXI"
+        "PIXI",
+        "json"
     ]
 }
