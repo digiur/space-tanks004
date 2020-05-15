@@ -6,9 +6,6 @@ import PATH from "path";
 // static routing for page
 const app = EXP();
 app.use(EXP.static("dist"));
-app.get("/", function (req, res) {
-	res.sendFile(PATH.join(__dirname + "/index.html"));
-});
 
 // listen for requests :)
 const server = app.listen(process.env.PORT || 3033);
@@ -21,10 +18,7 @@ io.on("connection", function (socket) {
 
 	socket.on("newShell", function (shellData) {
 		socket.broadcast.emit("newShell", shellData);
-	});
-
-	socket.on("playerPosUpdate", function (playerPosData) {
-		socket.broadcast.emit("playerPosUpdate", playerPosData);
+		console.log("new shell server-side")
 	});
 });
 

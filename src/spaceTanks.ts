@@ -1,3 +1,4 @@
+import IO from "socket.io-client";
 import * as PIXI from "pixi.js";
 import * as OBJ from "./stObjects";
 import * as MATH from "mathjs";
@@ -11,6 +12,7 @@ import { Player } from "./player";
 export class SpaceTanks {
 	public pixi: PIXI.Application;
 	public factory: STFactory;
+	public socket: SocketIOClient.Socket;
 	public worldCamera: WorldCamera;
 	public myPlayer: Player | undefined;
 	public tank: OBJ.Tank | undefined;
@@ -30,6 +32,7 @@ export class SpaceTanks {
 		this.pixi = pixi;
 		this.factory = new STFactory(this, pixi);
 		this.worldCamera = new WorldCamera(pixi);
+		this.socket = IO.connect("https://localhost:3033");
 	}
 	stInit(): void {
 		// PIXI and world setup for game
@@ -78,7 +81,25 @@ export class SpaceTanks {
 			this.newShell(this.aimPos, this.shellSize, dir.rotateDeg(2), 6.8);
 		});
 
-		console.log("SpaceTanks stIinit over");
+		// Network
+		this.socket.on("newShell", (pos: Victor, vel: Victor, life: number) => {
+			const s = new Shell(
+				pos.x,
+				pos.y,
+				this.shellSize,
+				vel.x,
+				vel.y,
+				new PIXI.Sprite(
+					PIXI.Loader.shared.resources["missile"].texture
+				),
+				this.worldCamera,
+				life
+			);
+			this.shells.push(s);
+			this.worldCamera.addChild(s.sprite, "shells");
+		});
+
+		console.log("SpaceTanks stInit over");
 	}
 	// Main update loop
 	stUpdate(dt: number): void {
@@ -130,6 +151,7 @@ export class SpaceTanks {
 		);
 		this.shells.push(s);
 		this.worldCamera.addChild(s.sprite, "shells");
+		this.socket.emit("newShell", pos, vel, life);
 		return s;
 	}
 	private newPlayer(): Player {

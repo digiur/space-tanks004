@@ -1,4 +1,3 @@
-//import IO from "socket.io-client";
 import * as PIXI from "pixi.js";
 import { SpaceTanks } from "./spaceTanks";
 
