@@ -32,7 +32,7 @@ export class SpaceTanks {
 		this.pixi = pixi;
 		this.factory = new STFactory(this, pixi);
 		this.worldCamera = new WorldCamera(pixi);
-		this.socket = IO.connect("https://space-tanks.herokuapp.com/");
+		this.socket = IO("https://space-tanks.herokuapp.com/");
 	}
 	stInit(): void {
 		// PIXI and world setup for game
@@ -83,6 +83,7 @@ export class SpaceTanks {
 
 		// Network
 		this.socket.on("newShell", (pos: Victor, vel: Victor, life: number) => {
+			console.log("networkNewShell");
 			const s = new Shell(
 				pos.x,
 				pos.y,

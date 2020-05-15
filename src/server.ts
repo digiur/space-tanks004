@@ -16,8 +16,8 @@ const io = SOC.listen(server);
 io.on("connection", function (socket) {
 	console.log("new connection: " + socket.id);
 
-	socket.on("newShell", function (shellData) {
-		socket.broadcast.emit("newShell", shellData);
+	socket.on("newShell", function (pos, vel, life) {
+		socket.broadcast.emit("newShell", pos, vel, life);
 		console.log("new shell server-side")
 	});
 });
